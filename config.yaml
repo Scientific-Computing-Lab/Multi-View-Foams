@@ -1,0 +1,8 @@
+data_dir: /home/nadavsc/Desktop/projects/targets/data
+images_dir: /home/nadavsc/Destkop/projects/targets/data/images
+full_groups_dir: /home/nadavsc/Desktop/projects/targets/data/full_groups
+preprocess_dir: /home/nadavsc/Desktop/projects/targets/data/preprocess
+augmentation_dir: /home/nadavsc/Desktop/projects/targets/data/augmentation
+train_dir: /home/nadavsc/Desktop/projects/targets/data/train
+test_dir: /home/nadavsc/Desktop/projects/targets/data/test
+models2_dir: /home/nadavsc/Desktop/projects/targets/model2/models

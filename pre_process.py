@@ -6,8 +6,7 @@ import torchvision.transforms.functional as TF
 
 from PIL import Image
 from skimage.exposure import match_histograms
-from augmentation_creator import AugmentationCreator
-from config import full_groups_dir, preprocess_dir, train_dir, test_dir, augmentation_dir, data_dir
+from config import full_groups_dir, preprocess_dir, data_dir
 
 
 def get_max_width_height(images):
@@ -159,7 +158,6 @@ def circle_permutation(img):
                 white_pixels = len(np.where((circle >= 190))[0]) / len(np.where((circle < 190) & (circle != 0))[0])
                 if white_pixels < min_white_pixels:
                     min_white_pixels = white_pixels
-                    # best_circle = mask_circle(img.copy(), center_coordinates=center_coordinates, radius=radius, delta=delta)
                     best_circle = circle
                     best_radius = radius
                     best_offset_x = offset_x
@@ -197,35 +195,5 @@ def preprocess(images, filenames, save_dir, multi_rotations, upwards=True, profi
 
 dir = os.path.join(data_dir, 'full_groups_defects')
 save_dir = os.path.join(data_dir, 'preprocess_defects')
-# # rename_images(dir)
 images, filenames = get_images(dir=dir, matched_histograms=False)
 preprocess(images, filenames, save_dir=save_dir, multi_rotations=True, upwards=True, profile=False)
-# augmentation_creator = AugmentationCreator(images, filenames)
-# augmentation_creator.run()
-
-
-# full_circles_dir = os.path.join(data_dir, 'full_groups_p1')
-# # filename = 'T479-2-9-0.png'
-# filename = 'T619-142-10-0.tif'
-# path = os.path.join(full_circles_dir, filename)
-# img_original = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2GRAY)
-# img = bounding_square_crop(circle_permutation(img_original))
-# # img_original, (x, y), radius = circle_permutation(img)
-# # img_centered, (x, y), radius = center_circle(img)
-# (x, y), radius = find_min_circle(img_original)
-# group_name = filename.split('.')[0]
-# extension = filename.split('.')[-1]
-# print(group_name)
-# print(extension)
-# for idx, angle in enumerate(range(0, 360, int(360/10))):
-#     img = np.array(TF.rotate(Image.fromarray(img_original.copy()), angle))
-#     img = bounded_square(img, (x, y), radius)
-#     cv2.imwrite(os.path.join(save_dir, f'{group_name}-{idx}.png'), img)
-
-# filename = f'{full_groups_dir}/T483-2-9-0.png'
-# example = convert_to_bins(cv2.cvtColor(cv2.imread(filename), cv2.COLOR_BGR2GRAY), bins=17)
-# masked = circle_permutation(example)
-# # masked = detect_circle(example, 360, 0, 0)
-# # cv2.imwrite(os.path.join(data_dir, 'T483-2-14-0.png'), masked)
-# cv2.imshow('masked', masked)
-# print('YADA')

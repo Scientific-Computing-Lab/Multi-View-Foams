@@ -2,7 +2,7 @@ import pickle
 from torchvision import transforms as tr
 from model1 import ModelTrainer
 
-from load_config import data_dir, augmentation_dir
+from config import data_dir, augmentation_dir
 # from test import ModelTrainer
 
 new_run = True

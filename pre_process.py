@@ -7,7 +7,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 from skimage.exposure import match_histograms
 from augmentation_creator import AugmentationCreator
-from load_config import full_groups_dir, preprocess_dir, train_dir, test_dir, augmentation_dir, data_dir
+from config import full_groups_dir, preprocess_dir, train_dir, test_dir, augmentation_dir, data_dir
 
 
 def get_max_width_height(images):

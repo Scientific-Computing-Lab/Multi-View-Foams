@@ -1,59 +1,51 @@
 import os
 import time
 import copy
-from datetime import datetime
 import pdb
 import pickle
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
+from datetime import date
 import numpy as np
 
-from model2 import ObjectsDataset, MVCNN, DMVCNN, count_parameters
-from load_config import full_groups_dir, preprocess_dir, augmentation_dir, train_dir, test_dir, data_dir, models2_dir
-
-full_groups_train_test_dir = os.path.join(data_dir, 'full_groups_train_test')
-full_train_dir = os.path.join(full_groups_train_test_dir, 'train')
-full_test_dir = os.path.join(full_groups_train_test_dir, 'test')
+from model2 import ObjectsDataset, MVCNN, model_dir_config, count_parameters
+from config import preprocess_dir, verbose
 
 
-tests_dir = os.path.join(models2_dir, 'tests')
-folders = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
-folders = ['multi_all', 'multi_profiles']
-# Examples type:
-# Multiview: all, X10, X20
-# Seperated:  X10_0 (bottom), X10_1 (top), X10_both
-examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both'], ['X10', 'X10'], ['all', 'all'], ['X20', 'X20']]
-examples_types = [['all', 'all'], ['X20', 'X20']]
-
-
+# ---Model settings---
+fc_in_features = 128  # 64 / 128 / 256
 EPOCHS = 150
-data_path = preprocess_dir
-# data_path = os.path.join(data_dir, 'history/preprocess_new_data')
-dmvcnn = False
-if data_path == augmentation_dir:
-    multiple_folders = True
-    augmentation = False
-    rotation = False
-else:
-    multiple_folders = False
-    augmentation = True
-    rotation = True
-    if dmvcnn:
-        rotation = False
-
-binary_classes = True
-given_idxs = True
-multiview_arr = ['all', 'X10', 'X20']
-
-num_classes = 3
-if binary_classes:
-    num_classes = 2
 num_workers = 8
+# ---Model settings---
+
+cur_date = date.today().strftime("%d_%m_%Y")
+full_data_use = True
+model_dir = model_dir_config(fc_in_features, cur_date, full_data_use)
+os.mkdir(model_dir)
+data_path = preprocess_dir
+
+augmentation = True
+rotation = True
+
+folders = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
+# Examples type:
+# Seperated:  X10_0 (bottom), X10_1 (top), X10_both
+multiview_arr = ['all', 'X10', 'X20']
+examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both'], ['X10', 'X10'], ['all', 'all'], ['X20', 'X20']]
+
+
+def verbosity(examples_type, multiview, no_yellow, val_indices, train_indices, dataset, device):
+    print('\ntraining...')
+    print(f'device: {device}')
+    print(f'Examples type: {examples_type} \nMultiview: {multiview}\nNo yellow: {no_yellow}\n')
+    if verbose > 1:
+        print(f'Val indices length: {len(val_indices)} \nTrain indices length: {len(train_indices)} \n')
+    if verbose > 2:
+        print(f'train group names: {np.array(dataset.group_names)[train_indices]} \ntest group names: {np.array(dataset.group_names)[val_indices]} \n')
+        print(f'train group labels: {np.array(dataset.group_labels)[train_indices]} \ntest group labels: {np.array(dataset.group_labels)[val_indices]} \n')
 
 
 def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
@@ -69,8 +61,9 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
     best_loss = 100
 
     for epoch in range(1, num_epochs + 1):
-        print('Epoch {}/{}'.format(epoch, num_epochs))
-        print('-' * 10)
+        if verbose:
+            print('Epoch {}/{}'.format(epoch, num_epochs))
+            print('-' * 10)
 
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
@@ -115,8 +108,8 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
             epoch_acc = running_corrects.double() / len(dataloaders[phase].sampler.indices)
             all_labels = torch.cat(all_labels, 0)
 
-
-            print('{} Loss: {:.4f} - Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+            if verbose:
+                print('{} Loss: {:.4f} - Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
             if phase == 'val' and epoch_loss < best_loss:
@@ -139,15 +132,16 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
     torch.save(model.state_dict(), os.path.join(save_dir, f'model_by_loss_{int(best_acc_loss*100)}.pt'))
 
     time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
-    print('Best val Acc: {:4f}'.format(best_acc))
-    print('Best val Acc by loss: {:4f}'.format(best_acc_loss))
+    if verbose:
+        print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+        print('Best val Acc: {:4f}'.format(best_acc))
+        print('Best val Acc by loss: {:4f}'.format(best_acc_loss))
 
     return model, val_acc_history, val_loss_history, train_acc_history, train_loss_history, best_acc
 
 
 for i, folder in enumerate(folders):
-    folder_dir = os.path.join(tests_dir, f'{folder}')
+    folder_dir = os.path.join(model_dir, f'{folder}')
     os.mkdir(folder_dir)
     for j, examples_type in enumerate(examples_types[i]):
         save_dir = os.path.join(folder_dir, f'{examples_type}_{j}')
@@ -156,34 +150,20 @@ for i, folder in enumerate(folders):
         multiview = False
         if j == 1:
             no_yellow = True
-        print('training...')
         if examples_type in multiview_arr:
             multiview = True
-        print(f'Examples type: {examples_type}')
-        print(f'Multiview: {multiview}')
-        print(f'No yellow: {no_yellow}\n')
         dataset = ObjectsDataset(data_path=data_path,
-                                 multiple_folders=multiple_folders,
-                                 binary_classes=binary_classes,
                                  multiview=multiview,
-                                 dmvcnn=dmvcnn,
                                  augmentation=augmentation,
                                  rotation=rotation,
                                  examples_type=examples_type,
                                  no_yellow=no_yellow,
-                                 given_idxs=given_idxs,
-                                 save_dir=save_dir)
+                                 save_dir=save_dir,
+                                 full_data_use=full_data_use)
         group_names = dataset.group_names
         y = dataset.group_labels
         outer_group_names = dataset.outer_group_names
-
         train_indices, val_indices = dataset.dataExtract.train_test_split()
-        print(f'Val indices length: {len(val_indices)}')
-        print(f'Train indices length: {len(train_indices)}')
-        print(f'train group names: {np.array(dataset.group_names)[train_indices]}')
-        print(f'test group names: {np.array(dataset.group_names)[val_indices]}')
-        print(f'train group labels: {np.array(dataset.group_labels)[train_indices]}')
-        print(f'test group labels: {np.array(dataset.group_labels)[val_indices]}')
         train_sampler = SubsetRandomSampler(train_indices)
         val_sampler = SubsetRandomSampler(val_indices)
 
@@ -191,15 +171,13 @@ for i, folder in enumerate(folders):
         val_loader = DataLoader(dataset, batch_size=4, sampler=val_sampler, num_workers=num_workers)
         data_loaders = {'train': train_loader, 'val': val_loader}
 
-        if dmvcnn:
-            model = DMVCNN(num_classes=num_classes, pretrained=True)
-        else:
-            model = MVCNN(num_classes=num_classes, pretrained=True)
+        model = MVCNN(fc_in_features=fc_in_features, pretrained=True)
 
         # DEFINE THE DEVICE
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model.to(device)
-        print(device)
+        if verbose:
+            verbosity(examples_type, multiview, no_yellow, val_indices, train_indices, dataset, device)
 
 
         # UNFREEZE ALL THE WEIGHTS OF THE NETWORK

@@ -193,7 +193,7 @@ def preprocess(images, filenames, save_dir, multi_rotations, upwards=True, profi
             cv2.imwrite(os.path.join(save_dir, f'{filenames[idx]}'), img)
 
 
-dir = os.path.join(data_dir, 'full_groups_defects')
-save_dir = os.path.join(data_dir, 'preprocess_defects')
+dir = full_groups_dir
+save_dir = preprocess_dir
 images, filenames = get_images(dir=dir, matched_histograms=False)
 preprocess(images, filenames, save_dir=save_dir, multi_rotations=True, upwards=True, profile=False)

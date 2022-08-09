@@ -22,7 +22,7 @@ Then, activate your environment:
 conda activate <env_name>
 ```
 
-```
+
 # Citation
 For more information about the measures and their means of the implementations, please refer to the paper.
 If you found these codes useful for your research, please consider citing: 
@@ -43,10 +43,19 @@ models2_dir: /home/your_name/Desktop/Multi-View-Foams/model2/models
 with open(r'/home/your_name/Desktop/Multi-View-Foams/config_paths.yaml') as file:
 ```
 
+3. Running on GPU is necessary in order to load our models. Change the relevant paths and run the following to mark the relevant scripts as source-roots.
+```
+conda activate <env_name>
+cd Desktop/Multi-View-Foams
+export PYTHONPATH=$PYTHONPATH:$PWD
+cd model2
+export PYTHONPATH=$PYTHONPATH:$PWD
+```
+
 ### Scripts
 There are several scripts:
 1. **data_extract.py** - the script for creating train and test sets. Creats the appropriate data according to the different parametrs (such as normal-defective including or not). Currently loads the pre-defined train to test split from the idxs_split.pkl file.
-2. **pre_process.py** - pre-processing the input images. Recommend to pre-process the top and bottom views seperatly from the profiles. Profiles in batch of data p1 and p2 are not processed well due to inconsistency in the data images (and thus a manual cut has been done).
+2. **pre_process.py** - pre-processing the input images.
 3. **train.py** - the script for training the different models' configurations.
 4. **evaluate.py** - generates AUC, ROC graph, loss and accuracy trends graphs for the models.
 5. **lime_test.py** - generates LIME explaination for chosen images and a chosen model out of the one-view top, one-view bottom and one-view top-bottom models.
@@ -54,7 +63,7 @@ There are several scripts:
 
 
 ## Training
-To train new models write your chosen models in train.py script.
+To train new models write your chosen models in model2/train.py script.
 Examples_types are mapped as follows: One-view:  X10_0 (bottom), X10_1 (top), X10_both. Multi-view: X10, X20, all and in the following structure:
 [['all']] for training with normal-defective and [['all', 'all']] for training both with and without normal-defective examples.
 ```
@@ -71,4 +80,20 @@ num_workers = 8
 fc_in_features is a variable determinning the number of neurons in the fully connected last layer and cut convolutional layers from the Resnet architecture correspondingly.
 
 ## Evaluate
+In order to evaluate a given models run the model2/evaluate.py script. You need to specify the chosen models the same as stated above in the training section.
+The evaluation outputs accuracy, AUC, ROC graph, and loss and accuracy trends graphs graphs
+
+## Model Explainability
+![](images/LIME.PNG)
+In order to evaluate a given models run the model2/evaluate.py script.
+
+# Data
+The data that was used for training in the paper can be found in:
+  * Images: *data/preprocess*.
+  * Labels: *data/image_labels.xlsx*.
+The raw data can be found in:
+  * Batch 1: *data/full_groups*.
+  * Batch 2: *data/full_groups_p1*.
+  * Batch 3: *data/full_groups_p2*.
+Note that you can't pre-processing the profiles in batch 2 and 3 due to inconsistency in the data images compare to the first batch (and thus a manual cut has been done and saved to the preprocess folder).
 

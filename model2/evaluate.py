@@ -31,7 +31,7 @@ data_path = preprocess_dir
 augmentation = False
 rotation = False
 
-folders = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
+models_names = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
 # Examples type:
 # Seperated:  X10_0 (bottom), X10_1 (top), X10_both
 multiview_arr = ['all', 'X10', 'X20']
@@ -151,7 +151,7 @@ def plot_graphs(save_dir, fpr=None, tpr=None):
         plt.close()
 
 
-for i, folder in enumerate(folders):
+for i, folder in enumerate(models_names):
     folder_dir = os.path.join(model_dir, f'{folder}')
     for j, examples_type in enumerate(examples_types[i]):
         save_dir = os.path.join(folder_dir, f'{examples_type}_{j}')

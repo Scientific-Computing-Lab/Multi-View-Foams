@@ -31,7 +31,7 @@ images_dir = preprocess_dir
 if not multiple_imgs:
     img_name = 'T483-2-8-1'
 
-folders = ['bottom', 'top', 'top_bottom']
+models_names = ['bottom', 'top', 'top_bottom']
 # Examples type:
 # Multiview: all, X10, X20
 # Seperated:  X10_0 (bottom), X10_1 (top), X10_both
@@ -108,7 +108,7 @@ def single_prediction():
 
 def run(img, img_name):
     global model, device
-    for i, folder in enumerate(folders):
+    for i, folder in enumerate(models_names):
         folder_dir = os.path.join(model_dir, f'{folder}')
         for j, examples_type in enumerate(examples_types[i]):
             save_dir = os.path.join(folder_dir, f'{examples_type}_{j}')
@@ -124,7 +124,7 @@ def run(img, img_name):
 
 
 def lime_folders_open():
-    for i, folder in enumerate(folders):
+    for i, folder in enumerate(models_names):
         folder_dir = os.path.join(model_dir, f'{folder}')
         for j, examples_type in enumerate(examples_types[i]):
             try:

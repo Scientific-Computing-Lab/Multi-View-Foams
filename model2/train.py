@@ -30,7 +30,7 @@ data_path = preprocess_dir
 augmentation = True
 rotation = True
 
-folders = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
+models_names = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
 # Examples type:
 # Seperated:  X10_0 (bottom), X10_1 (top), X10_both
 multiview_arr = ['all', 'X10', 'X20']
@@ -140,8 +140,8 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
     return model, val_acc_history, val_loss_history, train_acc_history, train_loss_history, best_acc
 
 
-for i, folder in enumerate(folders):
-    folder_dir = os.path.join(model_dir, f'{folder}')
+for i, model_name in enumerate(models_names):
+    folder_dir = os.path.join(model_dir, f'{model_name}')
     os.mkdir(folder_dir)
     for j, examples_type in enumerate(examples_types[i]):
         save_dir = os.path.join(folder_dir, f'{examples_type}_{j}')

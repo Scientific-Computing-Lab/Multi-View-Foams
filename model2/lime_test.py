@@ -15,6 +15,12 @@ from model2 import MVCNN, model_dir_config, verbose
 from config import preprocess_dir, verbose
 
 
+models_names = ['bottom', 'top', 'top_bottom']
+# Examples type:
+# Multiview: all, X10, X20
+# Seperated:  X10_0 (bottom), X10_1 (top), X10_both
+examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both']]
+
 # ---Model settings---
 model_by_type = 'loss'   # loss / acc
 fc_in_features = 128  # 64 / 128 / 256
@@ -22,20 +28,15 @@ num_workers = 8
 # ---Model settings---
 
 cur_date = '06_08_2022'
+images_dir = preprocess_dir
 full_data_use = True
+multiple_imgs = True
+
 model_dir = model_dir_config(fc_in_features, cur_date, full_data_use)
 if verbose > 0:
     print(model_dir)
-multiple_imgs = True
-images_dir = preprocess_dir
 if not multiple_imgs:
     img_name = 'T483-2-8-1'
-
-models_names = ['bottom', 'top', 'top_bottom']
-# Examples type:
-# Multiview: all, X10, X20
-# Seperated:  X10_0 (bottom), X10_1 (top), X10_both
-examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both']]
 
 
 def plot_graphs(img_name, params, save_dir):

@@ -7,6 +7,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 from skimage.exposure import match_histograms
 from config import full_groups_dir, preprocess_dir
+from model2 import verbose
 
 
 def get_max_width_height(images):
@@ -32,14 +33,14 @@ def rename_images(dir):
         idx += 1
 
 
-def get_images(dir, matched_histograms=False):
+def get_images(source_dir, matched_histograms=False):
     if matched_histograms:
         ref = cv2.imread(f'{full_groups_dir}/T483-2-5-0.png')
-        return [cv2.cvtColor(match_histograms(cv2.imread(os.path.join(dir, filename)), ref, multichannel=True), cv2.COLOR_BGR2GRAY)
+        return [cv2.cvtColor(match_histograms(cv2.imread(os.path.join(source_dir, filename)), ref, multichannel=True), cv2.COLOR_BGR2GRAY)
                 if int(filename.split('-')[-1][0]) < 2
-                else cv2.cvtColor(cv2.imread(os.path.join(dir, filename)), cv2.COLOR_BGR2GRAY)
-                for filename in os.listdir(dir)], os.listdir(dir)
-    return [cv2.cvtColor((cv2.imread(os.path.join(dir, filename))), cv2.COLOR_BGR2GRAY) for filename in os.listdir(dir)], os.listdir(dir)
+                else cv2.cvtColor(cv2.imread(os.path.join(source_dir, filename)), cv2.COLOR_BGR2GRAY)
+                for filename in os.listdir(source_dir)], os.listdir(source_dir)
+    return [cv2.cvtColor((cv2.imread(os.path.join(source_dir, filename))), cv2.COLOR_BGR2GRAY) for filename in os.listdir(source_dir)], os.listdir(source_dir)
 
 
 def noise(image):
@@ -110,20 +111,6 @@ def bounding_square_crop(img):
     return img[y-radius:y+radius, x-radius+1:x+radius]
 
 
-def bounded_square(img, center_coordinates, radius, draw=False):
-    x, y = center_coordinates
-    print(center_coordinates)
-    startpoint = (int(x - (radius / (2 ** 0.5))), int(y + (radius / (2 ** 0.5))))
-    endpoint = (int(x + (radius / (2 ** 0.5))), int(y - (radius / (2 ** 0.5))))
-    print(startpoint)
-    print(endpoint)
-    if draw:
-        cv2.rectangle(img, startpoint, endpoint, (255, 0, 0), 2)
-        plt.imshow(img, cmap='gray')
-        plt.show()
-    return img[endpoint[1]:startpoint[1], startpoint[0]:endpoint[0]]
-
-
 def mask_circle(img, center_coordinates, radius=355, delta=0):
     mask = np.zeros(img.shape, dtype="uint8")
     cv2.circle(img, center_coordinates, radius+delta, (0, 255, 0), 2)
@@ -147,11 +134,10 @@ def detect_circle(img, radius, center_coordinates, verbose=0):
 
 
 def circle_permutation(img):
-    # delta = 0  # 15, 35
     min_white_pixels = 10000000
     radii = list(range(295, 320, 4))
-    for offset_x in range(-14, 60, 3):  # (-60, 60, 3)
-        for offset_y in range(0, 100, 3):  # (-42, 60, 3)  (-100, 60, 3)
+    for offset_x in range(-60, 60, 3):  # (-60, 60, 3)
+        for offset_y in range(-100, 100, 3):  # (-42, 60, 3)  (-100, 60, 3)
             for radius in radii:
                 center_coordinates = (int(img.shape[0]/2) + offset_x, int(img.shape[1]/2) + offset_y)
                 circle = mask_circle(img.copy(), center_coordinates=center_coordinates, radius=radius)
@@ -163,28 +149,19 @@ def circle_permutation(img):
                     best_offset_x = offset_x
                     best_offset_y = offset_y
                     best_center_coordinates = center_coordinates
-    print(f'{best_offset_x} {best_offset_y} {best_radius}\n')
+    if verbose > 1:
+        print(f'best x offset: {best_offset_x} \nbest y offset: {best_offset_y} \nbest R: {best_radius} \n')
     return best_circle
 
 
-def multiple_boxes(img_original, filename, save_dir):
-    (x, y), radius = find_min_circle(img_original)
-    group_name = filename.split('.')[0]
-    for rotation_num, angle in enumerate(range(0, 360, int(360 / 5))):
-        img = np.array(TF.rotate(Image.fromarray(img_original.copy()), angle))
-        img = bounded_square(img, (x, y), radius)
-        cv2.imwrite(os.path.join(save_dir, f'{group_name}-{rotation_num}.png'), img)
-
-
-def preprocess(images, filenames, save_dir, multi_rotations, upwards=True, profile=True):
+def preprocess(images, filenames, save_dir, top_bottom=True, profile=True):
     max_height, max_width = get_max_width_height(images)
     for idx, img in enumerate(images):
         if int(filenames[idx].split('-')[-1][0]) <= 1:
-            if upwards:
-                print(filenames[idx])
+            if top_bottom:
+                if verbose > 2:
+                    print(filenames[idx])
                 img = bounding_square_crop(circle_permutation(img))
-                if multi_rotations:
-                    multiple_boxes(img, filenames[idx], save_dir)
                 group_name = filenames[idx].split('.')[0]
                 cv2.imwrite(os.path.join(save_dir, f'{group_name}.png'), img)
         elif profile:
@@ -193,7 +170,7 @@ def preprocess(images, filenames, save_dir, multi_rotations, upwards=True, profi
             cv2.imwrite(os.path.join(save_dir, f'{filenames[idx]}'), img)
 
 
-dir = full_groups_dir
-save_dir = preprocess_dir
-images, filenames = get_images(dir=dir, matched_histograms=False)
-preprocess(images, filenames, save_dir=save_dir, multi_rotations=True, upwards=True, profile=False)
+source_dir = full_groups_dir  # source images directory
+save_dir = preprocess_dir  # directory for saving the pre-processed images
+images, filenames = get_images(source_dir=source_dir, matched_histograms=False)
+preprocess(images, filenames, save_dir=save_dir, top_bottom=True, profile=False)

@@ -15,27 +15,26 @@ from model2 import ObjectsDataset, MVCNN, CPU_Unpickler, model_dir_config, verbo
 from config import preprocess_dir, verbose
 
 
-# ---Model settings---
-model_by_type = 'acc'   # loss / acc
-fc_in_features = 128  # 64 / 128 / 256
-num_workers = 8
-# ---Model settings---
-
-cur_date = '06_08_2022'
-full_data_use = True
-model_dir = model_dir_config(fc_in_features, cur_date, full_data_use)
-if verbose > 0:
-    print(model_dir)
-data_path = preprocess_dir
-
-augmentation = False
-rotation = False
-
 models_names = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
 # Examples type:
 # Seperated:  X10_0 (bottom), X10_1 (top), X10_both
 multiview_arr = ['all', 'X10', 'X20']
 examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both'], ['X10', 'X10'], ['all', 'all'], ['X20', 'X20']]
+
+# ---Model settings---
+model_by_type = 'loss'   # loss / acc
+fc_in_features = 128  # 64 / 128 / 256
+num_workers = 8
+# ---Model settings---
+
+cur_date = '06_08_2022'  # date of the chosen model
+data_path = preprocess_dir  # directory of the data set after pre-process
+full_data_use = True  # if false use 20 examples less in train set
+
+
+model_dir = model_dir_config(fc_in_features, cur_date, full_data_use)
+if verbose > 0:
+    print(model_dir)
 
 
 def settings(examples_type, j):
@@ -56,8 +55,8 @@ def settings(examples_type, j):
 def load_data(multiview, no_yellow):
     dataset = ObjectsDataset(data_path=data_path,
                              multiview=multiview,
-                             augmentation=augmentation,
-                             rotation=rotation,
+                             augmentation=False,
+                             rotation=False,
                              examples_type=examples_type,
                              no_yellow=no_yellow,
                              save_dir=save_dir,

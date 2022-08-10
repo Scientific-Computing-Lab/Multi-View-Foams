@@ -42,6 +42,11 @@ models2_dir: /home/your_name/Desktop/Multi-View-Foams/model2/models
 ```
 with open(r'/home/your_name/Desktop/Multi-View-Foams/config_paths.yaml') as file:
 ```
+Verbosity variable is in config.py and output as the following:
+1. verbosity 0 - no prints at all.
+2. verbosity 1 - print only states and flow.
+3. verbosity 2 - print lengths of arrays, and avove.
+4. verbosity 3 - print included examples' names and above.
 
 3. Running on GPU is necessary in order to load our models. Change the relevant paths and run the following to mark the relevant scripts as source-roots.
 ```
@@ -77,7 +82,14 @@ fc_in_features = 128  # 64 / 128 / 256
 EPOCHS = 150
 num_workers = 8
 ```
-fc_in_features is a variable determinning the number of neurons in the fully connected last layer and cut convolutional layers from the Resnet architecture correspondingly.
+fc_in_feature is determinning the number of neurons in the fully connected last layer and cut convolutional layers from the Resnet architecture correspondingly.
+You also need to turn on or off the right flags:
+```
+data_path = preprocess_dir  # directory of the data set after pre-process
+full_data_use = True  # if false use 20 examples less in train set
+augmentation = True  # augmentation such as brightnesss adjustments and gaussian noise
+rotation = True  # rotation augmentation
+```
 
 ## Evaluate
 In order to evaluate a given models run the model2/evaluate.py script. You need to specify the chosen models the same as stated above in the training section.
@@ -85,15 +97,21 @@ The evaluation outputs accuracy, AUC, ROC graph, and loss and accuracy trends gr
 
 ## Model Explainability
 ![](images/LIME.PNG)
-In order to evaluate a given models run the model2/evaluate.py script.
+Choosing the models you want to examine is similiar to the explaination above. You can choose one of the following models: one-view top, one-view bottom and one-view top-bottom. After entering a given directory, the script runs LIME on all the images in the path for all the specified models. You can also examine one image by turnning off the flag - multiple_imgs.
 
 # Data
 The data that was used for training in the paper can be found in:
   * Images: *data/preprocess*.
   * Labels: *data/image_labels.xlsx*.
-The raw data can be found in:
+* The raw data can be found in:
   * Batch 1: *data/full_groups*.
   * Batch 2: *data/full_groups_p1*.
   * Batch 3: *data/full_groups_p2*.
-Note that you can't pre-processing the profiles in batch 2 and 3 due to inconsistency in the data images compare to the first batch (and thus a manual cut has been done and saved to the preprocess folder).
+
+
+## Pre-Process
+![](images/pre_process.PNG)
+In order to pre-process the images fill the right source and save directories.
+You can choose if you want to pre-preprocess only top and bottom views, only profiles or both.
+Note that pre-processing the profiles in batch 2 and 3 isn't working due to inconsistency in the data images compare to the first batch (and thus a manual cut has been done and saved to the preprocess folder).
 

@@ -15,6 +15,12 @@ from model2 import ObjectsDataset, MVCNN, model_dir_config, count_parameters
 from config import preprocess_dir, verbose
 
 
+models_names = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
+# Examples type:
+# Seperated:  X10_0 (bottom), X10_1 (top), X10_both
+multiview_arr = ['all', 'X10', 'X20']
+examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both'], ['X10', 'X10'], ['all', 'all'], ['X20', 'X20']]
+
 # ---Model settings---
 fc_in_features = 128  # 64 / 128 / 256
 EPOCHS = 150
@@ -22,19 +28,13 @@ num_workers = 8
 # ---Model settings---
 
 cur_date = date.today().strftime("%d_%m_%Y")
-full_data_use = True
+data_path = preprocess_dir  # directory of the data set after pre-process
+full_data_use = True  # if false use 20 examples less in train set
+augmentation = True  # augmentation such as brightnesss adjustments and gaussian noise
+rotation = True  # rotation augmentation
+
 model_dir = model_dir_config(fc_in_features, cur_date, full_data_use)
 os.mkdir(model_dir)
-data_path = preprocess_dir
-
-augmentation = True
-rotation = True
-
-models_names = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']
-# Examples type:
-# Seperated:  X10_0 (bottom), X10_1 (top), X10_both
-multiview_arr = ['all', 'X10', 'X20']
-examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both'], ['X10', 'X10'], ['all', 'all'], ['X20', 'X20']]
 
 
 def verbosity(examples_type, multiview, no_yellow, val_indices, train_indices, dataset, device):

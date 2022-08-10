@@ -43,10 +43,10 @@ models2_dir: /home/your_name/Desktop/Multi-View-Foams/model2/models
 with open(r'/home/your_name/Desktop/Multi-View-Foams/config_paths.yaml') as file:
 ```
   Verbosity variable is in config.py and output info according to the following levels:
-  1. verbosity 0 - no prints at all.
-  2. verbosity 1 - print only states and flow.
-  3. verbosity 2 - print lengths of arrays, and avove.
-  4. verbosity 3 - print included examples' names and above.
+  * verbosity 0 - no prints at all.
+  * verbosity 1 - print only states and flow.
+  * verbosity 2 - print lengths of arrays, and avove.
+  * verbosity 3 - print included examples' names and above.
 
 3. Running on GPU is necessary in order to load our models. Change the relevant paths and run the following to mark the relevant scripts as source-roots.
 ```

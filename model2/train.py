@@ -21,6 +21,7 @@ models_names = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 
 multiview_arr = ['all', 'X10', 'X20']
 examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both'], ['X10', 'X10'], ['all', 'all'], ['X20', 'X20']]
 
+
 # ---Model settings---
 fc_in_features = 128  # 64 / 128 / 256
 EPOCHS = 150

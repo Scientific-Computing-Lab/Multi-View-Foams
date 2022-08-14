@@ -69,14 +69,7 @@ There are several scripts:
 
 ## Training
 To train new models write your chosen models in model2/train.py script.
-Examples_types are mapped as follows: One-view:  X10_0 (bottom), X10_1 (top), X10_both. Multi-view: X10, X20, all????model2
-    ????models
-        ????fc_in_features_128_20_07_2022
-        ?   ????bottom
-        ?       ????X10_0_0
-        ?       ????X10_0_1
-        ????m2_fc_in_features_128_20_07_2022
- and in the following structure:
+Examples_types are mapped as follows: One-view:  X10_0 (bottom), X10_1 (top), X10_both. Multi-view: X10, X20, all and in the following structure:
 [['all']] for training with normal-defective and [['all', 'all']] for training both with and without normal-defective examples.
 ```
 models = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 'multi_profiles']

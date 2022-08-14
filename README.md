@@ -45,7 +45,7 @@ with open(r'/home/your_name/Desktop/Multi-View-Foams/config_paths.yaml') as file
   Verbosity variable is in config.py and output info according to the following levels:
   * verbosity 0 - no prints at all.
   * verbosity 1 - print only states and flow.
-  * verbosity 2 - print lengths of arrays, and avove.
+  * verbosity 2 - print lengths of arrays, and above.
   * verbosity 3 - print included examples' names and above.
 
 3. Running on GPU is necessary in order to load our models. Change the relevant paths and run the following to mark the relevant scripts as source-roots.
@@ -113,7 +113,7 @@ The data that was used for training in the paper can be found in:
 ## Pre-Process
 ![](images/pre_process.PNG)
 
-In order to pre-process the images fill the right source and save directories.
+In order to pre-process the images enter pre_process.py and fill the right source and save directories.
 You can choose if you want to pre-preprocess only top and bottom views, only profiles or both.
 Note that pre-processing the profiles in batch 2 and 3 isn't working due to inconsistency in the data images compare to the first batch (and thus a manual cut has been done and saved to the preprocess folder).
 

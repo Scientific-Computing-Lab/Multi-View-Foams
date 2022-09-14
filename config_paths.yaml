@@ -1,4 +1,5 @@
-data_dir: /home/your_name/Desktop/Multi-View-Foams/data
-full_groups_dir: /home/your_name/Desktop/Multi-View-Foams/data/full_groups
-preprocess_dir: /home/your_name/Desktop/Multi-View-Foams/data/preprocess
-models2_dir: /home/your_name/Desktop/Multi-View-Foams/model2/models
+data_dir: /home/nadavsc/Desktop/Multi-View-Foams/data
+full_groups_dir: /home/nadavsc/Desktop/Multi-View-Foams/data/full_groups
+preprocess_dir: /home/nadavsc/Desktop/Multi-View-Foams/data/preprocess
+models1_dir: /home/nadavsc/Desktop/Multi-View-Foams/model1/models
+models2_dir: /home/nadavsc/Desktop/Multi-View-Foams/model2/models

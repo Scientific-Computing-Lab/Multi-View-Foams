@@ -1,1 +1,0 @@
-accuracy on model2 train-test split: 72 %

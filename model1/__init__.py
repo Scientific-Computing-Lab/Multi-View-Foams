@@ -23,11 +23,15 @@ data_dir = os.path.join(project_path, 'data')
 old_models = os.path.join(dirname(abspath(__file__)), 'old_models')
 
 
+def accuracy(lr, x, y):
+    return round(accuracy_score(y_true=y, y_pred=lr.predict(x)) * 100, 2)
+
+
 def model_dir_config(K, cur_date, full_data_use=True):
     prefix = ''
     if not full_data_use:
         prefix = 'm2_'
-    return os.path.join(models1_dir, f'{prefix}K_{K}_{cur_date}')
+    return os.path.join(models1_dir, f'{prefix}K_centroids_{K}_{cur_date}')
 
 
 def normalize_data(x_train, x_test):
@@ -48,12 +52,12 @@ def logistic_regression_train(x_train, y_train):
 class ModelTrainer:
     def __init__(self,
                  data_path,
-                 binary_classes,
+                 no_yellow,
                  feature_matrix=None,
                  k_means=None,
                  centroids=None,
                  examples_type='all',
-                 full_groups_only=False,
+                 full_data_use=True,
                  augmentation={},
                  surf_param=300,
                  k_centroids=200,
@@ -62,9 +66,8 @@ class ModelTrainer:
                  k_fold_size=20,
                  test_size=0.3):
         self.data_path = data_path
-        self.binary_classes = binary_classes
         self.examples_type = examples_type
-        self.full_groups_only = full_groups_only
+        self.full_data_use = full_data_use
         self.augmentation = augmentation
         self.surf_param = surf_param
         self.img_shape = img_shape
@@ -75,7 +78,7 @@ class ModelTrainer:
         self.dataExtract = DataExtract(data_path=data_path,
                                        multiview=True,
                                        examples_type=examples_type,
-                                       no_yellow=False,
+                                       no_yellow=no_yellow,
                                        save_dir=save_dir,
                                        full_data_use=True)
         self.group_names = self.dataExtract.group_names
@@ -84,7 +87,7 @@ class ModelTrainer:
         self.outer_group_names = self.dataExtract.outer_group_names
 
         self.examples_images = self.get_examples_images()
-        self._num_of_groups = len(self.group_names)
+        self._n_groups = len(self.group_names)
         self.k_centroids = k_centroids
 
         if feature_matrix is None:
@@ -96,12 +99,17 @@ class ModelTrainer:
             self.centroids = centroids
 
         self.X, self.y = self.feature_matrix[self.labels_idx], self.labels
-        self.k_fold_accuracy()
-
+        if self.k_fold_size == 0:
+            x_train, x_test, y_train, y_test = self.data_prep(*self.dataExtract.train_test_split())
+            lr = logistic_regression_train(x_train, y_train)
+            acc = accuracy(lr, x_test, y_test)
+            print(f'Accuracy: {acc}')
+        else:
+            self.k_fold_accuracy()
 
     @property
-    def num_of_groups(self):
-        return self._num_of_groups
+    def n_groups(self):
+        return self._n_groups
 
     def examples_fnames(self, item_path, group_name):
         filenames = [filename for filename in os.listdir(item_path) if filename.startswith(group_name)][:5]
@@ -121,26 +129,24 @@ class ModelTrainer:
         return examples_images
 
     def random_train_test_split(self):
-        n_examples = len(self.group_names)
-        idxs = np.arange(0, n_examples)
+        idxs = np.arange(0, self.n_groups)
         np.random.shuffle(idxs)
 
-        idx_split = int(n_examples * self.test_size)
+        idx_split = int(self.n_groups * self.test_size)
         return idxs[idx_split:], idxs[:idx_split]
 
-    def train_test_split(self):
-        train_idx, test_idx = self.random_train_test_split()
+    def data_prep(self, train_idx, test_idx):
         x_train, x_test, y_train, y_test = self.X[train_idx], self.X[test_idx], self.y[train_idx], self.y[test_idx]
         x_train, x_test = normalize_data(x_train, x_test)
         return x_train, x_test, y_train, y_test
 
     def k_fold_accuracy(self):
         sum = 0
+        np.random.seed(0)
         for k in range(self.k_fold_size):
-            x_train, x_test, y_train, y_test = self.train_test_split()
+            x_train, x_test, y_train, y_test = self.data_prep(*self.random_train_test_split())
             lr = logistic_regression_train(x_train, y_train)
-            y_pred = lr.predict(x_test)
-            acc = round(accuracy_score(y_test, y_pred) * 100, 2)
+            acc = accuracy(lr, x_test, y_test)
             sum += acc
             print(f'{k+1}) accuracy: {acc}')
         print(f'Average accuracy: {sum/self.k_fold_size}')
@@ -178,7 +184,7 @@ class ModelTrainer:
         return feature_vec
 
     def matrix_of_feature_vectors(self):
-        feature_matrix = np.empty((self.num_of_groups, self.k_centroids))
+        feature_matrix = np.empty((self.n_groups, self.k_centroids))
         for group_idx in range(len(self.group_names)):
             feature_matrix[group_idx] = self.get_feature_vec(group_idx=group_idx)
         print('Shape of the feature matrix', feature_matrix.shape)

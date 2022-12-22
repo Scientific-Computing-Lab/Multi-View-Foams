@@ -85,8 +85,33 @@ class DataExtract:
             group_idx += list(np.arange(idx * self.inner_group_size, idx * self.inner_group_size + self.inner_group_size))
         return group_idx
 
+    def update_idxs(self):
+        with open(f'{data_dir}/train.pickle', 'rb') as f:
+            train = pickle.load(f)
+        with open(f'{data_dir}/test.pickle', 'rb') as f:
+            test = pickle.load(f)
+        train = self.labels[self.labels['model_name'].isin(list(train['model_name']))]
+        test = self.labels[self.labels['model_name'].isin(list(test['model_name']))]
+        new_examples = self.labels[~self.labels['model_name'].isin(list(train['model_name'])+list(test['model_name']))]
+        for label in ['green', 'yellow', 'red']:
+            df = new_examples[new_examples['label']==label]
+            train = pd.concat([train, df[0:round(len(df)/2)]])
+            test = pd.concat([test, df[round(len(df)/2):]])
+        with open(f'{data_dir}/train.pickle', 'rb') as f:
+            pickle.dump(train, f)
+        with open(f'{data_dir}/test.pickle', 'rb') as f:
+            pickle.dump(test, f)
+
+    def load_idxs(self):
+        with open(f'{data_dir}/train.pickle', 'rb') as f:
+            train = pickle.load(f)
+        with open(f'{data_dir}/test.pickle', 'rb') as f:
+            test = pickle.load(f)
+        return np.array(train['index']), np.array(test['index'])
+
     def train_test_split(self):
-        group_train_idx, group_test_idx = self.convert_to_real_idxs(self.idxs_split[0], self.idxs_split[1])
+        group_train_idx, group_test_idx = self.convert_to_real_idxs(*self.load_idxs())
+        # group_train_idx, group_test_idx = self.convert_to_real_idxs(self.idxs_split[0], self.idxs_split[1])
         if verbose > 2:
             print(f'group_train_idx: {group_train_idx} \n group_test_idx: {group_test_idx}')
         if self.examples_type == 'X10_both':

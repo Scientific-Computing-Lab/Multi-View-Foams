@@ -1,6 +1,6 @@
 import numpy as np
-import os
 import io
+import os
 import random
 import pdb
 import torch
@@ -94,7 +94,9 @@ class ObjectsDataset(Dataset):
                  examples_type='all',
                  no_yellow=False,
                  save_dir=None,
-                 full_data_use=True):
+                 full_data_use=True,
+                 eval_dir=None,
+                 base_train_test=False):
         self.data_path = data_path
         self.examples_type = examples_type
         self.augmentation = augmentation
@@ -104,7 +106,9 @@ class ObjectsDataset(Dataset):
                                        examples_type=examples_type,
                                        no_yellow=no_yellow,
                                        save_dir=save_dir,
-                                       full_data_use=full_data_use)
+                                       full_data_use=full_data_use,
+                                       eval_dir=eval_dir,
+                                       base_train_test=False)
         self.group_names = self.dataExtract.group_names
         self.group_labels = self.dataExtract.group_labels
         self.group_labels_idx = self.dataExtract.group_labels_idx

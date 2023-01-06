@@ -1,4 +1,11 @@
 import os
+import sys
+from os.path import dirname, abspath
+
+project_path = dirname(dirname(abspath(__file__)))
+sys.path.append(project_path)
+sys.path.append(os.path.join(project_path, 'model2'))
+
 import time
 import copy
 import pdb
@@ -21,7 +28,6 @@ models_names = ['bottom', 'top', 'top_bottom', 'multi_top_bottom', 'multi_all', 
 multiview_arr = ['all', 'X10', 'X20']
 examples_types = [['X10_0', 'X10_0'], ['X10_1', 'X10_1'], ['X10_both', 'X10_both'], ['X10', 'X10'], ['all', 'all'], ['X20', 'X20']]
 
-
 # ---Model settings---
 fc_in_features = 128  # 64 / 128 / 256
 EPOCHS = 150
@@ -30,12 +36,18 @@ num_workers = 8
 
 cur_date = date.today().strftime("%d_%m_%Y")
 data_path = preprocess_dir  # directory of the data set after pre-process
+base_train_test = True # if true use the base train to test split in data dir and not randomize
 full_data_use = True  # if false use 20 examples less in train set
 augmentation = True  # augmentation such as brightnesss adjustments and gaussian noise
 rotation = True  # rotation augmentation
 
 model_dir = model_dir_config(fc_in_features, cur_date, full_data_use)
-os.mkdir(model_dir)
+try:
+    os.mkdir(model_dir)
+except:
+    version = int(model_dir.split('_')[-1])
+    model_dir = f'{model_dir}_{version + 1}' if version < 30 else f'{model_dir}_1'
+    os.mkdir(f'{model_dir}')
 
 
 def verbosity(examples_type, multiview, no_yellow, val_indices, train_indices, dataset, device):
@@ -160,7 +172,8 @@ for i, model_name in enumerate(models_names):
                                  examples_type=examples_type,
                                  no_yellow=no_yellow,
                                  save_dir=save_dir,
-                                 full_data_use=full_data_use)
+                                 full_data_use=full_data_use,
+                                 base_train_test=base_train_test)
         group_names = dataset.group_names
         y = dataset.group_labels
         outer_group_names = dataset.outer_group_names

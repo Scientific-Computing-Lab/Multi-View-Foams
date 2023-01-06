@@ -1,6 +1,0 @@
-train:	23 green
-	21 yellow
-	22 red
-test: 	10 green
-	10 yellow
-	9 red

@@ -1,6 +1,13 @@
+import os
+import sys
+from os.path import dirname, abspath
+
+project_path = dirname(dirname(abspath(__file__)))
+sys.path.append(project_path)
+sys.path.append(os.path.join(project_path, 'model2'))
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pdb
 import pickle
 import torch
@@ -10,8 +17,9 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import confusion_matrix
 
-from model2 import ObjectsDataset, MVCNN, CPU_Unpickler, model_dir_config, verbose
+from model2 import ObjectsDataset, MVCNN, CPU_Unpickler, model_dir_config
 from config import preprocess_dir, verbose
 
 
@@ -27,10 +35,10 @@ fc_in_features = 128  # 64 / 128 / 256
 num_workers = 8
 # ---Model settings---
 
-cur_date = '06_08_2022'  # date of the chosen model
+# cur_date = '06_01_2023'  # date of the chosen model
+cur_date = 'test'  # date of the chosen model
 data_path = preprocess_dir  # directory of the data set after pre-process
 full_data_use = True  # if false use 20 examples less in train set
-
 
 model_dir = model_dir_config(fc_in_features, cur_date, full_data_use)
 if verbose > 0:
@@ -60,8 +68,9 @@ def load_data(multiview, no_yellow):
                              examples_type=examples_type,
                              no_yellow=no_yellow,
                              save_dir=save_dir,
-                             full_data_use=full_data_use)
-    train_indices, val_indices = dataset.dataExtract.train_test_split()
+                             full_data_use=full_data_use,
+                             eval_dir=model_dir)
+    train_indices, val_indices = dataset.dataExtract.train_test_split(eval=True)
     if verbose > 1:
         print(f'Val indices length: {len(val_indices)}')
         print(f'Train indices length: {len(train_indices)}')
@@ -98,6 +107,8 @@ def auc_calc(val_loader, model):
             labels = np.array(labels.cpu())
             fpr, tpr, thresholds = roc_curve(labels, outputs[:, 1])
             auc = roc_auc_score(labels, outputs[:, 1])
+            tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
+            conf_mat = [tn, fp, fn, tp]
             if verbose > 0:
                 print('AUC: %.3f \n' % auc)
             if verbose > 2:
@@ -113,6 +124,8 @@ def auc_calc(val_loader, model):
                 pickle.dump(tpr, f)
             with open(os.path.join(save_dir, f'thresholds_model_by_{model_by_type}.pkl'), 'wb') as f:
                 pickle.dump(thresholds, f)
+            with open(os.path.join(save_dir, f'conf_mat_{tn}_{fp}_{fn}_{tp}_{model_by_type}.pkl'), 'wb') as f:
+                pickle.dump(conf_mat, f)
     return fpr, tpr
 
 

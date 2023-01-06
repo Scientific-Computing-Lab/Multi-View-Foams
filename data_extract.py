@@ -3,6 +3,9 @@ import pandas as pd
 import pickle
 import os
 import pdb
+
+from os.path import dirname
+
 from config import data_dir, verbose
 
 
@@ -13,14 +16,21 @@ class DataExtract:
                  examples_type='all',
                  no_yellow=False,
                  save_dir=None,
-                 full_data_use=True):
+                 full_data_use=True,
+                 test_size=0.2,
+                 eval_dir=None,
+                 base_train_test=False):
         self.data_path = data_path
         self.multiview = multiview
         self.examples_type = examples_type
         self.no_yellow = no_yellow
         self.save_dir = save_dir
+        self.model_dir = dirname(dirname(save_dir))
+        print(self.model_dir)
         self.full_data_use = full_data_use
-        self.idxs_split = self.idxs_load()
+        self.test_size = test_size
+        self.eval_dir = eval_dir
+        self.base_train_test = base_train_test
         self.classes_id = {'red': 0,
                            'yellow': 0,
                            'green': 1}
@@ -85,11 +95,38 @@ class DataExtract:
             group_idx += list(np.arange(idx * self.inner_group_size, idx * self.inner_group_size + self.inner_group_size))
         return group_idx
 
-    def update_idxs(self):
-        with open(f'{data_dir}/train.pickle', 'rb') as f:
+    def save_train_test(self, train, test, path):
+        with open(f'{path}/train.pickle', 'wb') as f:
+            pickle.dump(train, f)
+        with open(f'{path}/test.pickle', 'wb') as f:
+            pickle.dump(test, f)
+
+    def write_info(self, train, test):
+        info = ''
+        n_per_label = {'train': {}, 'test': {}}
+        for label in ('green', 'yellow', 'red'):
+            n_per_label['train'][label] = len(train['label'].loc[train['label'] == label])
+            n_per_label['test'][label] = len(test['label'].loc[test['label'] == label])
+        for mode in ('train', 'test'):
+            info += f"{mode} - green:{n_per_label[mode]['green']}, " \
+                    f"yellow:{n_per_label[mode]['yellow']}, " \
+                    f"red:{n_per_label[mode]['red']}\n"
+        with open(os.path.join(self.model_dir, 'info.txt'), 'w') as f:
+            f.write(info)
+
+    def load_train_test(self, path):
+        postfix = ''
+        if path == data_dir:
+            postfix = '_base'
+        with open(f'{path}/train{postfix}.pickle', 'rb') as f:
             train = pickle.load(f)
-        with open(f'{data_dir}/test.pickle', 'rb') as f:
+        with open(f'{path}/test{postfix}.pickle', 'rb') as f:
             test = pickle.load(f)
+        self.write_info(train, test)
+        return train, test
+
+    def update_idxs(self):
+        train, test = self.load_train_test(data_dir)
         train = self.labels[self.labels['model_name'].isin(list(train['model_name']))]
         test = self.labels[self.labels['model_name'].isin(list(test['model_name']))]
         new_examples = self.labels[~self.labels['model_name'].isin(list(train['model_name'])+list(test['model_name']))]
@@ -97,21 +134,40 @@ class DataExtract:
             df = new_examples[new_examples['label']==label]
             train = pd.concat([train, df[0:round(len(df)/2)]])
             test = pd.concat([test, df[round(len(df)/2):]])
-        with open(f'{data_dir}/train.pickle', 'rb') as f:
-            pickle.dump(train, f)
-        with open(f'{data_dir}/test.pickle', 'rb') as f:
-            pickle.dump(test, f)
+        self.save_train_test(train, test, data_dir)
 
-    def load_idxs(self):
-        with open(f'{data_dir}/train.pickle', 'rb') as f:
-            train = pickle.load(f)
-        with open(f'{data_dir}/test.pickle', 'rb') as f:
-            test = pickle.load(f)
+    def ratio_handler(self, random=False):
+        train, test = self.load_train_test(path=data_dir)
+        if random:
+            test = test.sample(frac=1)
+        add_train = int((len(train) + len(test))*(1-self.test_size)) - len(train)
+        train = pd.concat([train, test.iloc[:add_train]])
+        test = test.iloc[add_train:]
+
+        train.to_csv(os.path.join(self.model_dir, 'train.csv'))
+        test.to_csv(os.path.join(self.model_dir, 'test.csv'))
+        self.write_info(train, test)
+        return train, test
+
+    def load_idxs(self, eval=False):
+        if eval:
+            train, test = self.load_train_test(self.eval_dir)
+            return np.array(train['index']), np.array(test['index'])
+
+        if self.base_train_test:
+            train, test = self.load_train_test(data_dir)
+            return np.array(train['index']), np.array(test['index'])
+
+        if os.path.isfile(f'{self.model_dir}/train.pickle'):
+            train, test = self.load_train_test(self.model_dir)
+            return np.array(train['index']), np.array(test['index'])
+
+        train, test = self.ratio_handler(random=True)
+        self.save_train_test(train, test, self.model_dir)
         return np.array(train['index']), np.array(test['index'])
 
-    def train_test_split(self):
-        group_train_idx, group_test_idx = self.convert_to_real_idxs(*self.load_idxs())
-        # group_train_idx, group_test_idx = self.convert_to_real_idxs(self.idxs_split[0], self.idxs_split[1])
+    def train_test_split(self, eval=False):
+        group_train_idx, group_test_idx = self.convert_to_real_idxs(*self.load_idxs(eval))
         if verbose > 2:
             print(f'group_train_idx: {group_train_idx} \n group_test_idx: {group_test_idx}')
         if self.examples_type == 'X10_both':

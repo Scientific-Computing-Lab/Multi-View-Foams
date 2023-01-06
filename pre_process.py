@@ -2,11 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import os
+import pd
+import re
 import torchvision.transforms.functional as TF
 
 from PIL import Image
 from skimage.exposure import match_histograms
-from config import full_groups_dir, preprocess_dir
+from config import data_dir, full_groups_dir, preprocess_dir
 from model2 import verbose
 
 
@@ -20,17 +22,6 @@ def get_max_width_height(images):
         if width > max_width:
             max_width = width
     return max_height, max_width
-
-
-def rename_images(dir):
-    idx = 0
-    for fname in os.listdir(dir):
-        if idx == 5:
-            idx = 0
-        group_name = '-'.join(fname.split('-')[:3])
-        extension = fname.split('.')[-1]
-        os.rename(os.path.join(dir, fname), os.path.join(dir, f'{group_name}-{idx}.{extension}'))
-        idx += 1
 
 
 def get_images(source_dir, matched_histograms=False):
@@ -53,6 +44,13 @@ def noise(image):
     gauss = gauss.reshape(row, col, ch)
     noisy = abs(image + gauss).astype(int)
     return noisy
+
+
+def convert_to_png(src, dst):
+    for fname in os.listdir(src):
+        img = cv2.imread(os.path.join(src, fname))
+        name = f'{fname.split(".")[0]}.png'
+        cv2.imwrite(os.path.join(dst, name), img)
 
 
 def convert_to_bins(img, bins):
@@ -135,9 +133,9 @@ def detect_circle(img, radius, center_coordinates, verbose=0):
 
 def circle_permutation(img):
     min_white_pixels = 10000000
-    radii = list(range(295, 320, 4))
+    radii = list(range(295, 320, 4))  # (295, 320, 4)
     for offset_x in range(-60, 60, 3):  # (-60, 60, 3)
-        for offset_y in range(-100, 100, 3):  # (-42, 60, 3)  (-100, 60, 3)
+        for offset_y in range(-100, 100, 3):  # (-42, 60, 3)  (-100, 60, 3)  (-100, 100, 3)
             for radius in radii:
                 center_coordinates = (int(img.shape[0]/2) + offset_x, int(img.shape[1]/2) + offset_y)
                 circle = mask_circle(img.copy(), center_coordinates=center_coordinates, radius=radius)
@@ -170,7 +168,8 @@ def preprocess(images, filenames, save_dir, top_bottom=True, profile=True):
             cv2.imwrite(os.path.join(save_dir, f'{filenames[idx]}'), img)
 
 
-source_dir = full_groups_dir  # source images directory
-save_dir = preprocess_dir  # directory for saving the pre-processed images
+source_dir = os.path.join(data_dir, 'circles_preprocess')  # source images directory
+save_dir = os.path.join(data_dir, 'circles_preprocess_new')  # directory for saving the pre-processed images
+# convert_to_png(src='data/preprocess_profiles', dst='data/preprocess_profiles_new')
 images, filenames = get_images(source_dir=source_dir, matched_histograms=False)
 preprocess(images, filenames, save_dir=save_dir, top_bottom=True, profile=False)
